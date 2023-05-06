@@ -13,7 +13,7 @@ namespace ChatGptDemo.Services
         {
             _configuration = configuration;
             // Put API Key here
-            _api = OpenAIAPI.ForAzure(_configuration["OPENAI:RESOURCE_NAME"], _configuration["OPENAI:DEPLOYMENT_ID"], _configuration["OPENAI:API_KEY"]);
+            _api = OpenAIAPI.ForAzure(_configuration["OPENAI:RESOURCE_NAME"], _configuration["OPENAI:DEPLOYMENT_ID"], Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY",EnvironmentVariableTarget.Machine));
             _api.ApiVersion = _configuration["OPENAI:API_VERSION"];
 
         }
