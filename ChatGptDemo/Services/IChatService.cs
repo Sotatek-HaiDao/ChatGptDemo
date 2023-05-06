@@ -4,6 +4,6 @@ namespace ChatGptDemo.Services
 {
     public interface IChatService
     {
-        Task<ChatResult> SendMessage(string payload);
+        Task<ChatResult> SendMessage(string payload, string[] chatHistory);
     }
 }

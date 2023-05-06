@@ -17,11 +17,17 @@ namespace ChatGptDemo.Services
             _api.ApiVersion = _configuration["OPENAI:API_VERSION"];
 
         }
-        public async Task<ChatResult> SendMessage(string payload)
+        public async Task<ChatResult> SendMessage(string payload, string[] chatHistory)
         {
             try
             {             
-                var messages = Enumerable.Empty<ChatMessage>();             
+                var messages = Enumerable.Empty<ChatMessage>();
+                // Append conversation history for continuous chat dialog
+                for (int i = 0; i + 1 < chatHistory.Length - 1; i += 2)
+                {
+                    messages = messages.Append(new ChatMessage(ChatMessageRole.User, chatHistory[i]));
+                    messages = messages.Append(new ChatMessage(ChatMessageRole.Assistant, chatHistory[i + 1]));
+                }
                 // Append new user input (question)
                 messages = messages.Append(new ChatMessage(ChatMessageRole.User, payload));
                 var result = await _api.Chat.CreateChatCompletionAsync(new ChatRequest()

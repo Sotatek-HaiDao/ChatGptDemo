@@ -18,7 +18,7 @@ namespace ChatGptDemo.Controllers
         [HttpPost]
         public async Task<IActionResult> SendMessage([FromBody] ChatMessageDTO request)
         {
-            var response = await _chatService.SendMessage(request.Message);
+            var response = await _chatService.SendMessage(request.Message, request.ChatHistory);
 
             return Ok(response.Choices[0].Message);
 
