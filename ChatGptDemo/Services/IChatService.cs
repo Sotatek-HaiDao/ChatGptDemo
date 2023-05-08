@@ -1,9 +1,10 @@
-﻿using OpenAI_API.Chat;
+﻿using Azure.AI.OpenAI;
+using Azure;
 
 namespace ChatGptDemo.Services
 {
     public interface IChatService
     {
-        Task<ChatResult> SendMessage(string payload, string[] chatHistory);
+        Task<Response<ChatCompletions>> SendMessage(string payload, string[] chatHistory);
     }
 }

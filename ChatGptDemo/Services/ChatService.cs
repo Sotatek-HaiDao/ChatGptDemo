@@ -1,51 +1,43 @@
-﻿using OpenAI_API;
-using OpenAI_API.Chat;
-using OpenAI_API.Models;
+﻿using Azure;
+using Azure.AI.OpenAI;
 using System.Text;
 
 namespace ChatGptDemo.Services
 {
     public class ChatService : IChatService
     {
-        private readonly OpenAIAPI _api;
+        private readonly OpenAIClient _client;
         private readonly IConfiguration _configuration;
         public ChatService(IConfiguration configuration)
         {
             _configuration = configuration;
-            // Put API Key here
-            _api = OpenAIAPI.ForAzure(_configuration["OPENAI:RESOURCE_NAME"], _configuration["OPENAI:DEPLOYMENT_ID"], Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY"));
-            _api.ApiVersion = _configuration["OPENAI:API_VERSION"];
 
+            string endpoint = _configuration["OPENAI:BASE_URL"];
+            string key = Environment.GetEnvironmentVariable("AZURE_OPENAI_API_KEY");
+            _client = new(new Uri(endpoint), new AzureKeyCredential(key));
         }
-        public async Task<ChatResult> SendMessage(string payload, string[] chatHistory)
-        {
-            try
-            {             
-                var messages = Enumerable.Empty<ChatMessage>();
-                // Append conversation history for continuous chat dialog
-                for (int i = 0; i + 1 < chatHistory.Length - 1; i += 2)
-                {
-                    messages = messages.Append(new ChatMessage(ChatMessageRole.User, chatHistory[i]));
-                    messages = messages.Append(new ChatMessage(ChatMessageRole.Assistant, chatHistory[i + 1]));
-                }
-                // Append new user input (question)
-                messages = messages.Append(new ChatMessage(ChatMessageRole.User, payload));
-                var result = await _api.Chat.CreateChatCompletionAsync(new ChatRequest()
-                {
-                    Model = Model.ChatGPTTurbo,
-                    Temperature = 0.1,
-                    MaxTokens = 1000,
-                    Messages = messages.ToList()
-                });
 
-                // Save usage in DB for reference
-                //TODO
-                return result;
-            }
-            catch (Exception ex)
+        public async Task<Response<ChatCompletions>> SendMessage(string message, string[] history)
+        {          
+            var chatCompletionsOptions = new ChatCompletionsOptions();
+            chatCompletionsOptions.Temperature = (float)0.1;
+            chatCompletionsOptions.MaxTokens = 1000;
+            // Append conversation history for continuous chat dialog
+            for (int i = 0; i < history.Length; i++)
             {
-                throw new Exception(ex.Message);
+                if (i % 2 == 0)
+                {
+                    chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.User, history[i]));
+                }
+                else
+                { 
+                    chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.Assistant, history[i]));
+                }
             }
+            // Append new user input (question)
+            chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.User, message));
+            Response<ChatCompletions> responseWithoutStream = await _client.GetChatCompletionsAsync(_configuration["OPENAI:DEPLOYMENT_ID"], chatCompletionsOptions);
+            return responseWithoutStream;
         }
     }
 }

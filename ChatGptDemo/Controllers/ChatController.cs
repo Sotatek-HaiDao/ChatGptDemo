@@ -22,7 +22,7 @@ namespace ChatGptDemo.Controllers
             {
                 var response = await _chatService.SendMessage(request.Message, request.ChatHistory);
 
-                return Ok(response.Choices[0].Message);
+                return Ok(response.Value.Choices[0].Message);
             }
             catch (Exception ex) 
             {
