@@ -1,5 +1,6 @@
 ﻿using Azure;
 using Azure.AI.OpenAI;
+using ChatGptDemo.Models;
 using System.Text;
 
 namespace ChatGptDemo.Services
@@ -8,6 +9,7 @@ namespace ChatGptDemo.Services
     {
         private readonly OpenAIClient _client;
         private readonly IConfiguration _configuration;
+        private readonly string followingUpQuestion = "Generate three very brief follow-up questions that the user would likely ask next.Separate them with '|'";
         public ChatService(IConfiguration configuration)
         {
             _configuration = configuration;
@@ -17,7 +19,7 @@ namespace ChatGptDemo.Services
             _client = new(new Uri(endpoint), new AzureKeyCredential(key));
         }
 
-        public async Task<Response<ChatCompletions>> SendMessage(string message, string[] history)
+        public async Task<ReceiveGPTData> SendMessage(string message, string[] history)
         {          
             var chatCompletionsOptions = new ChatCompletionsOptions();
             chatCompletionsOptions.Temperature = (float)0.1;
@@ -37,7 +39,36 @@ namespace ChatGptDemo.Services
             // Append new user input (question)
             chatCompletionsOptions.Messages.Add(new ChatMessage(ChatRole.User, message));
             Response<ChatCompletions> responseWithoutStream = await _client.GetChatCompletionsAsync(_configuration["OPENAI:DEPLOYMENT_ID"], chatCompletionsOptions);
-            return responseWithoutStream;
+            var resModel = responseWithoutStream.Value.Choices[0].Message;
+            ReceiveGPTData res = new ReceiveGPTData();
+            Role role = new Role();
+            role.Label = resModel.Role.Label;
+            res.Role = role;
+            res.Content = resModel.Content;
+            res.FollowingUpQuestions = await GetUpCommingQuestion(chatCompletionsOptions.Messages);
+            return res;
+        }
+
+        private async Task<List<string>> GetUpCommingQuestion(IList<ChatMessage> chatHistory)
+        {
+            try
+            {
+
+                chatHistory.Add(new ChatMessage(ChatRole.System, followingUpQuestion));
+                var chatCompletionsOptions = new ChatCompletionsOptions();
+                chatCompletionsOptions.Temperature = (float)0.1;
+                chatCompletionsOptions.MaxTokens = 1000;
+                foreach (ChatMessage chatMessage in chatHistory)
+                {
+                    chatCompletionsOptions.Messages.Add(chatMessage);
+                }
+                Response<ChatCompletions> responseWithoutStream = await _client.GetChatCompletionsAsync(_configuration["OPENAI:DEPLOYMENT_ID"], chatCompletionsOptions);
+                return responseWithoutStream.Value.Choices[0].Message.Content.Split("|").ToList();
+            }
+            catch (Exception ex) 
+            {
+                return null;
+            }
         }
     }
 }
