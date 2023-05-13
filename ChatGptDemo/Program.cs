@@ -9,6 +9,7 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 builder.Services.AddScoped<IChatService, ChatService>();
+builder.Services.AddScoped<ISeachService, SearchService>();
 builder.Services.AddCors(p => p.AddPolicy(name: MyAllowSpecificOrigins, builder =>
 {
     builder.WithOrigins("*").AllowAnyMethod().AllowAnyHeader();
