@@ -51,7 +51,8 @@ namespace ChatGptDemo.Services
                 foreach (JsonElement element in valueArray.EnumerateArray())
                 {
                     string content = element.GetProperty("content").GetString() ?? "";
-                    combinedContent += Utils.Nonewlines(content);
+                    string sourcePart = element.GetProperty("metadata_storage_name").GetString();
+                    combinedContent += $"{sourcePart} : {Utils.Nonewlines(content)} \n";
                 }
                 return combinedContent;
             }
