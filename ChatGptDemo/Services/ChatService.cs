@@ -2,6 +2,7 @@
 using Azure.AI.OpenAI;
 using ChatGptDemo.Models;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace ChatGptDemo.Services
 {
@@ -11,7 +12,7 @@ namespace ChatGptDemo.Services
 Use 'you' to refer to the individual asking the questions even if they ask with 'I'. 
 Answer the following question using only the data provided in the sources below. 
 For tabular information return it as an html table. Do not return markdown format. 
-Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response and put it in format '[source name that you use]'. 
+Each source has a name followed by colon and the actual information, always include the source name for each fact you use in the response. 
 If you cannot answer using the sources below, say you don't know. 
 
 ###
@@ -65,7 +66,18 @@ Answer:
             Role role = new Role();
             role.Label = resModel.Role.Label;
             res.Role = role;
-            res.Content = resModel.Content;
+            string pattern = @"\b\w+\.[a-zA-Z0-9]+\b";
+
+            // Find all matches of the pattern in the input string
+            var content = resModel.Content;
+            MatchCollection matches = Regex.Matches(content, pattern);
+
+            // Replace each match with the wrapped version
+            foreach (Match match in matches)
+            {
+                content = Regex.Replace(content, match.Value, "[" + match.Value + "]");
+            }
+            res.Content = content;
             res.FollowingUpQuestions = await GetUpCommingQuestion(chatCompletionsOptions.Messages);
             return res;
         }
