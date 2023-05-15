@@ -27,7 +27,7 @@ Answer:
         private readonly OpenAIClient _client;
         private readonly IConfiguration _configuration;
         private readonly ISeachService _seachService;
-        private readonly string followingUpQuestion = "Generate three very brief follow-up questions that the user would likely ask next.Separate them with '|'";
+        private readonly string followingUpQuestion = "Generate six very brief follow-up questions that the user would likely ask next.Separate them with '|'";
         public ChatService(IConfiguration configuration, ISeachService seachService)
         {
             _configuration = configuration;
